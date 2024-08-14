@@ -1,0 +1,29 @@
+#!/bin/bash
+
+[ $# -lt 1 ] && echo "Usage: $0 <filename>" && exit 1
+
+NEEDFILE=$1
+
+pacman -F $NEEDFILE > tmpf
+cat tmpf
+if [ $? -ne 0 ]; then
+    echo "--------------"
+    echo "ERROR: Failed to find $NEEDFILE"
+    exit 1
+fi
+
+PKGNAME=$(head -n 1 tmpf | python -c 's=input(); L=s.split(); print(L[0].split("/")[1])')
+PKGFILE=$(head -n 1 tmpf | python -c 's=input(); L=s.split(); print(L[0].split("/")[1],L[1],"x86_64.pkg.tar.zst",sep="-")')
+LOCALFILE=$(tail -n 1 tmpf | python -c 's=input(); print(s.strip())')
+FIRSTCHAR=${PKGFILE:0:1}
+URL="https://archive.archlinux.org/packages/$FIRSTCHAR/$PKGNAME/$PKGFILE"
+
+echo "$URL"
+wget -q --no-check-certificate -c "$URL"
+tar --zstd -xf $PKGFILE
+
+sudo cp -iv $LOCALFILE /$LOCALFILE
+
+#extra/dav1d 1.2.0-1 [installed: 1.4.3-1]
+#    usr/lib/libdav1d.so.6
+# install some old file from old pkg.
